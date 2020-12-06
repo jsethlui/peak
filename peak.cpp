@@ -4,6 +4,8 @@
 #include <iostream>
 #include <getopt.h>
 #include <csignal>
+#include <vector>
+#include <string>
 
 const int SIZE = 256;
 
@@ -32,15 +34,16 @@ std::string get_all_pids() {
     return result; 
 }
 
-std::vector<std::string> get_pid() {
+void get_pid() {
     char buffer[SIZE];
     std::vector<std::string> all_pid;
     std::string result;
-    std::string current_row = "";
-    int current_row_num = 1;
-    while (current_row_num != 10) {
-        current_row += current_row_num;
-        FILE* pipe = popen("ps -A | awk \'NR==" + current_row + "{print $1}\' | grep [0-9]", "r"); // getting all PID's
+    int current_row = 1;
+    while (current_row != 5) {
+//        std::cout << "current_row: " << std::to_string(current_row) << "\n";
+        std::string current_command = "ps -A | awk \'NR==" + std::to_string(current_row) + "{print $1}\' | grep [0-9]";
+//        std::cout << "current_command: " << current_command << "\n";
+        FILE* pipe = popen(current_command.c_str(), "r"); // getting all PID's
         if (!pipe) {
             std::cout << "Error: popen failed" << "\n";
             exit(EXIT_FAILURE);
@@ -50,9 +53,16 @@ std::vector<std::string> get_pid() {
                 result += buffer;
             }
         }  
-        all_pid.push_back(current_row);
-        current_row_num++;
+        std::cout << "result: " << result  << "\n";
+//        all_pid.push_back(current_command);
+        current_row++;
     }
+
+    // printing vector for testing purposes
+    // std::cout << "vector: " << "\n";
+    // for (int i = 0; i < all_pid.size(); i++) {
+    //     std::cout << all_pid[i] << "\n";
+    // }
 }
 
 int main(int argc, char* argv[]) {
@@ -98,6 +108,7 @@ int main(int argc, char* argv[]) {
          //std::cout << "\n" << get_CPU_temp << "\n";
 
     signal(SIGINT, signal_handler);
-    std::cout << get_all_pids() << "\n";
+    get_pid();
+    std::cout << "\n";
     exit(EXIT_SUCCESS);
 }
