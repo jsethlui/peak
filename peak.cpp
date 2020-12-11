@@ -6,6 +6,7 @@
 #include <csignal>
 #include <vector>
 #include <string>
+#include <sstream>
 
 const int SIZE = 256;
 
@@ -16,22 +17,20 @@ void signal_handler(int signum) {
     exit(signum);
 }
 
-std::string get_all_pids() {
-    char buffer[SIZE];
-    std::string result = "";
-    FILE* pipe = popen("ps -A | awk \'NR==2{print $1}\' | grep [0-9]", "r"); // getting all PID's
-    if (!pipe) {
-        std::cout << "Error: popen failed" << "\n";
-        exit(EXIT_FAILURE);
+void print_vector(const std::vector<std::string> a_vector) {
+    for (int i = 0; i < a_vector.size(); i++) {
+        std::cout << "[" << i << "]: " << a_vector[i] << "\n";
     }
+}
 
-    while (!feof(pipe)) {
-        if(fgets(buffer, SIZE, pipe) != NULL) {
-            result += buffer;
-        }
-    }  
-    pclose(pipe);
-    return result; 
+std::vector<std::string> split_string(const std::string &str, char delimiter) {
+    std::vector<std::string> result_vector;
+    std::stringstream ss(str);
+    std::string current_str;
+    while (std::getline(ss, current_str, delimiter)) {
+        result_vector.push_back(current_str);
+    }
+    return result_vector;
 }
 
 void get_pid() {
@@ -39,10 +38,9 @@ void get_pid() {
     std::vector<std::string> all_pid;
     std::string result;
     int current_row = 1;
-    while (current_row != 5) {
-//        std::cout << "current_row: " << std::to_string(current_row) << "\n";
+    // getting all PID's as one contained string
+    while (current_row != 10) {
         std::string current_command = "ps -A | awk \'NR==" + std::to_string(current_row) + "{print $1}\' | grep [0-9]";
-//        std::cout << "current_command: " << current_command << "\n";
         FILE* pipe = popen(current_command.c_str(), "r"); // getting all PID's
         if (!pipe) {
             std::cout << "Error: popen failed" << "\n";
@@ -53,16 +51,11 @@ void get_pid() {
                 result += buffer;
             }
         }  
-        std::cout << "result: " << result  << "\n";
-//        all_pid.push_back(current_command);
+        
         current_row++;
     }
-
-    // printing vector for testing purposes
-    // std::cout << "vector: " << "\n";
-    // for (int i = 0; i < all_pid.size(); i++) {
-    //     std::cout << all_pid[i] << "\n";
-    // }
+    all_pid = split_string(result, '\n');   // splitting PID string by newline characters 
+    print_vector(all_pid);
 }
 
 int main(int argc, char* argv[]) {
@@ -107,7 +100,7 @@ int main(int argc, char* argv[]) {
     //int get_CPU_temp = system("sudo powermetrics --samplers smc | grep -i ([^\"CPU die temperature:\"]*[0-9]{1,2}.{2,3})");
          //std::cout << "\n" << get_CPU_temp << "\n";
 
-    signal(SIGINT, signal_handler);
+//    signal(SIGINT, signal_handler);
     get_pid();
     std::cout << "\n";
     exit(EXIT_SUCCESS);
