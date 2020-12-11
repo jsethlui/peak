@@ -8,7 +8,7 @@
 #include <string>
 #include <sstream>
 
-const int SIZE = 256;
+const int SIZE = 128;
 
 // ([^CPU die temperature:]*[0-9]{1,2}.{2,3})
 
@@ -39,20 +39,27 @@ void get_pid() {
     std::string result;
     int current_row = 1;
     // getting all PID's as one contained string
-    while (current_row != 10) {
-        std::string current_command = "ps -A | awk \'NR==" + std::to_string(current_row) + "{print $1}\' | grep [0-9]";
-        FILE* pipe = popen(current_command.c_str(), "r"); // getting all PID's
-        if (!pipe) {
-            std::cout << "Error: popen failed" << "\n";
-            exit(EXIT_FAILURE);
-        }
-        while (!feof(pipe)) {
-            if(fgets(buffer, SIZE, pipe) != NULL) {
-                result += buffer;
+    while (true) {
+        // ps -A | awk '{print  $1}' | grep -E '[0-9]'
+        try {
+            std::string current_command = "ps -A | awk \'NR==" + std::to_string(current_row) + "{print $1}\' | grep [0-9]";
+            FILE* pipe = popen(current_command.c_str(), "r"); // getting all PID's
+            if (!pipe) {
+                std::cout << "Error: popen failed" << "\n";
+                throw "popen error";
             }
-        }  
-        
+            while (!feof(pipe)) {
+                if(fgets(buffer, SIZE, pipe) != NULL) {
+                    result += buffer;
+                }
+            }  
+        }
+        catch (...) {
+            std::cout << "caught error" << "\n";
+            break;
+        }    
         current_row++;
+//        std::cout << current_row << "\n";
     }
     all_pid = split_string(result, '\n');   // splitting PID string by newline characters 
     print_vector(all_pid);
